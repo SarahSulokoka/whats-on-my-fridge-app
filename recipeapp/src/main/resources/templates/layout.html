@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <title th:text="${pageTitle} ?: 'RecipeApp'">RecipeApp</title>
+</head>
+<body>
+<div class="container">
+
+    <div class="nav">
+        <div class="brand">
+            <h1>RecipeApp</h1>
+            <small>Find recipes from your fridge</small>
+        </div>
+
+        <div class="links">
+            <a th:href="@{/fridge}">Fridge</a>
+            <a th:href="@{/recipes/new}">New Recipe</a>
+        </div>
+    </div>
+
+    <div class="card" th:fragment="content">
+        <!-- content goes here -->
+    </div>
+
+</div>
+</body>
+</html>

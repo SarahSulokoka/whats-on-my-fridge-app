@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <title>Fridge</title>
+</head>
+<body>
+<div class="container">
+
+  <div class="nav">
+    <div class="brand">
+      <h1>RecipeApp</h1>
+      <small>Write what you have & get recipes</small>
+    </div>
+    <div class="links">
+      <a th:href="@{/fridge}">Fridge</a>
+      <a th:href="@{/recipes/new}">New Recipe</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Fridge Search</h2>
+    <p class="muted">Write ingredients separated by commas. Example: <span class="kbd">egg, milk, flour</span></p>
+
+    <form th:action="@{/fridge/search}" method="post">
+      <div class="form-row" style="grid-template-columns: 1fr 180px;">
+        <div>
+          <label>Ingredients</label>
+          <input type="text" name="ingredients" th:value="${ingredients}" placeholder="e.g. egg, milk, flour">
+        </div>
+        <div style="display:flex; align-items:end;">
+          <button class="btn" type="submit">Search</button>
+        </div>
+      </div>
+    </form>
+
+    <h3>Results</h3>
+
+    <div th:if="${recipes != null}">
+      <div th:if="${#lists.isEmpty(recipes)}" class="muted">
+        No recipes found.
+      </div>
+
+      <ul class="list" th:if="${!#lists.isEmpty(recipes)}">
+        <li th:each="r : ${recipes}">
+          <span th:text="${r.title}"></span>
+          <span class="muted" th:text="${r.owner != null ? r.owner.username : ''}"></span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
