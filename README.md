@@ -171,6 +171,45 @@ This demonstrates basic API consumption, data transformation, and persistence.
 - MySQL
 - Git
 
-### 1. Create Database
+### 
+1. Create Database
 ```sql
 CREATE DATABASE recipe_fridge;
+
+ 2. Configure Application Properties
+
+Update application.properties if needed:
+
+spring.datasource.url=jdbc:mysql://localhost:3306/recipe_fridge
+spring.datasource.username=YOUR_USERNAME
+spring.datasource.password=YOUR_PASSWORD
+
+
+3. Build the Application
+mvn clean package
+
+4. Run the Application
+mvn spring-boot:run
+
+
+or
+
+
+java -jar target/recipeapp.jar
+
+5. Access the Application
+http://localhost:8080
+
+
+Notes
+
+The application supports multilingual structure.
+Due to time constraints, full Greek localization was not completed, as it required
+more effort than initially estimated. The application remains fully functional in English.
+
+Author
+
+Sarah Sulokoka
+Coding Factory 8 – Athens University of Economics and Business
+
+
