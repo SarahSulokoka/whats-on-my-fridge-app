@@ -1,11 +1,20 @@
 package gr.aueb.cf.recipeapp.service.impl;
 
 import gr.aueb.cf.recipeapp.dto.CreateRecipeDTO;
-import gr.aueb.cf.recipeapp.model.entity.*;
+import gr.aueb.cf.recipeapp.dto.RecipeMatchDTO;
+import gr.aueb.cf.recipeapp.model.entity.Ingredient;
+import gr.aueb.cf.recipeapp.model.entity.Recipe;
+import gr.aueb.cf.recipeapp.model.entity.RecipeIngredient;
+import gr.aueb.cf.recipeapp.model.entity.User;
 import gr.aueb.cf.recipeapp.model.enums.Unit;
-import gr.aueb.cf.recipeapp.repository.*;
+import gr.aueb.cf.recipeapp.repository.IngredientRepository;
+import gr.aueb.cf.recipeapp.repository.RecipeIngredientRepository;
+import gr.aueb.cf.recipeapp.repository.RecipeRepository;
+import gr.aueb.cf.recipeapp.repository.UserRepository;
 import gr.aueb.cf.recipeapp.service.interfaces.RecipeService;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,42 +40,78 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public List<Recipe> findRecipesByIngredientNames(List<String> ingredientNames) {
+    public List<Recipe> findAllRecipesAlphabetical() {
+        return recipeRepository.findAll(Sort.by(Sort.Direction.ASC, "title"));
+    }
+
+    @Override
+    public List<RecipeMatchDTO> recommendRecipes(List<String> ingredientNames) {
         if (ingredientNames == null || ingredientNames.isEmpty()) return List.of();
 
-        Set<String> fridge = ingredientNames.stream()
+        LinkedHashSet<String> fridge = ingredientNames.stream()
                 .filter(Objects::nonNull)
                 .map(String::trim)
                 .map(String::toLowerCase)
                 .filter(s -> !s.isBlank())
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
         if (fridge.isEmpty()) return List.of();
 
+        int n = fridge.size();
+        int requiredMatch = (n <= 2) ? n : (n - 1);
+
         List<Recipe> allRecipes = recipeRepository.findAll();
+        List<RecipeMatchDTO> results = new ArrayList<>();
 
-        return allRecipes.stream()
-                .filter(r -> r.getRecipeIngredients() != null)
-                .filter(r -> {
-                    Set<String> recipeIngs = r.getRecipeIngredients().stream()
-                            .map(ri -> ri.getIngredient().getName().trim().toLowerCase())
-                            .collect(Collectors.toSet());
+        for (Recipe r : allRecipes) {
+            if (r.getRecipeIngredients() == null || r.getRecipeIngredients().isEmpty()) continue;
 
-                    return fridge.containsAll(recipeIngs);
-                })
-                .toList();
+            LinkedHashSet<String> recipeIngs = r.getRecipeIngredients().stream()
+                    .map(ri -> ri.getIngredient().getName())
+                    .filter(Objects::nonNull)
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .filter(s -> !s.isBlank())
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+
+            if (recipeIngs.isEmpty()) continue;
+
+            int matchedFromInput = 0;
+            for (String x : fridge) {
+                if (recipeIngs.contains(x)) matchedFromInput++;
+            }
+
+            if (matchedFromInput < requiredMatch) continue;
+
+            List<String> missingFromRecipe = recipeIngs.stream()
+                    .filter(x -> !fridge.contains(x))
+                    .toList();
+
+            RecipeMatchDTO dto = new RecipeMatchDTO();
+            dto.setRecipeId(r.getId());
+            dto.setTitle(r.getTitle());
+            dto.setDescription(r.getDescription());
+            dto.setHaveCount(matchedFromInput);
+            dto.setTotalIngredients(recipeIngs.size());
+            dto.setMissing(missingFromRecipe);
+            dto.setMissingCount(missingFromRecipe.size());
+
+            results.add(dto);
+        }
+
+        results.sort(
+                Comparator
+                        .comparingInt(RecipeMatchDTO::getMissingCount)
+                        .thenComparingInt(RecipeMatchDTO::getHaveCount).reversed()
+                        .thenComparing(RecipeMatchDTO::getTitle, String.CASE_INSENSITIVE_ORDER)
+        );
+
+        return results;
     }
 
     @Override
-    public void createRecipe(CreateRecipeDTO dto) {
-
-        User user = userRepository.findByUsername("demo")
-                .orElseGet(() -> {
-                    User u = new User();
-                    u.setUsername("demo");
-                    u.setPassword("demo");
-                    return userRepository.save(u);
-                });
+    public void createRecipe(CreateRecipeDTO dto, String username) {
+        User user = userRepository.findByUsername(username).orElseThrow();
 
         Recipe recipe = new Recipe();
         recipe.setTitle(dto.getTitle());
@@ -74,37 +119,106 @@ public class RecipeServiceImpl implements RecipeService {
         recipe.setOwner(user);
         recipeRepository.save(recipe);
 
+        saveIngredientsForRecipe(recipe, dto);
+    }
+
+    @Override
+    public List<Recipe> findMyRecipes(String username) {
+        return recipeRepository.findByOwnerUsernameOrderByIdDesc(username);
+    }
+
+    @Override
+    public void deleteRecipe(Long recipeId, String username) {
+        Recipe recipe = recipeRepository.findByIdAndOwnerUsername(recipeId, username).orElseThrow();
+
+        if (recipe.getRecipeIngredients() != null) {
+            for (RecipeIngredient ri : recipe.getRecipeIngredients()) {
+                recipeIngredientRepository.delete(ri);
+            }
+        }
+
+        recipeRepository.delete(recipe);
+    }
+
+    @Override
+    public CreateRecipeDTO getRecipeForEdit(Long recipeId, String username) {
+        Recipe recipe = recipeRepository.findByIdAndOwnerUsername(recipeId, username).orElseThrow();
+
+        CreateRecipeDTO dto = new CreateRecipeDTO();
+        dto.setTitle(recipe.getTitle());
+        dto.setDescription(recipe.getDescription());
+
+        List<CreateRecipeDTO.IngredientDTO> list = new ArrayList<>();
+        if (recipe.getRecipeIngredients() != null) {
+            for (RecipeIngredient ri : recipe.getRecipeIngredients()) {
+                CreateRecipeDTO.IngredientDTO ing = new CreateRecipeDTO.IngredientDTO();
+                ing.setName(ri.getIngredient() != null ? ri.getIngredient().getName() : "");
+                ing.setQuantity(ri.getQuantity());
+                ing.setUnit(ri.getUnit() != null ? ri.getUnit().name() : "GRAM");
+                list.add(ing);
+            }
+        }
+
+        if (list.isEmpty()) {
+            list.add(new CreateRecipeDTO.IngredientDTO());
+        }
+
+        dto.setIngredients(list);
+        return dto;
+    }
+    @Override
+    @Transactional
+    public void updateRecipe(Long id, CreateRecipeDTO dto, String username) {
+
+        Recipe recipe = recipeRepository.findByIdAndOwnerUsername(id, username)
+                .orElseThrow();
+
+        recipe.setTitle(dto.getTitle());
+        recipe.setDescription(dto.getDescription());
+        recipeRepository.save(recipe);
+
+        // delete old ingredients rows
+        recipeIngredientRepository.deleteByRecipeId(recipe.getId());
+        recipeIngredientRepository.flush(); // ✅
+
+        // insert new ingredients rows
+        saveIngredientsForRecipe(recipe, dto);
+    }
+
+
+
+
+    private void saveIngredientsForRecipe(Recipe recipe, CreateRecipeDTO dto) {
         if (dto.getIngredients() == null) return;
 
-        for (CreateRecipeDTO.IngredientDTO ingDto : dto.getIngredients()) {
+        Set<String> seen = new HashSet<>();
 
+        for (CreateRecipeDTO.IngredientDTO ingDto : dto.getIngredients()) {
             if (ingDto == null) continue;
 
-            String ingName = ingDto.getName() == null ? "" : ingDto.getName().trim();
-            if (ingName.isBlank()) continue;
+            String name = ingDto.getName() == null ? "" : ingDto.getName().trim().toLowerCase();
+            if (name.isBlank()) continue;
+
+            if (!seen.add(name)) continue;
 
             Ingredient ingredient = ingredientRepository
-                    .findByNameIgnoreCase(ingName)
+                    .findByNameIgnoreCase(name)
                     .orElseGet(() -> {
                         Ingredient newIng = new Ingredient();
-                        newIng.setName(ingName.toLowerCase());
+                        newIng.setName(name);
                         return ingredientRepository.save(newIng);
                     });
 
             RecipeIngredient ri = new RecipeIngredient();
             ri.setRecipe(recipe);
             ri.setIngredient(ingredient);
+            ri.setQuantity(ingDto.getQuantity() == null ? 0.0 : ingDto.getQuantity());
 
-            Double qty = ingDto.getQuantity() == null ? 0.0 : ingDto.getQuantity();
-            ri.setQuantity(qty);
-
-            Unit unit = Unit.PIECE;
-            if (ingDto.getUnit() != null && !ingDto.getUnit().isBlank()) {
-                unit = Unit.valueOf(ingDto.getUnit().trim().toUpperCase());
-            }
-            ri.setUnit(unit);
+            String unitStr = ingDto.getUnit() == null ? "GRAM" : ingDto.getUnit().trim();
+            ri.setUnit(Unit.valueOf(unitStr));
 
             recipeIngredientRepository.save(ri);
         }
     }
+
 }

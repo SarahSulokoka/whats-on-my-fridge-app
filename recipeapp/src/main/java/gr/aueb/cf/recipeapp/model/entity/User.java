@@ -5,10 +5,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints = @UniqueConstraint(columnNames = "username")
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,15 +19,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String username;
 
     @Column(nullable = false)
     private String password;
-
-    @OneToMany(mappedBy = "owner")
-    private List<Recipe> recipes;
-
-    @OneToMany(mappedBy = "user")
-    private List<UserIngredient> userIngredients;
 }

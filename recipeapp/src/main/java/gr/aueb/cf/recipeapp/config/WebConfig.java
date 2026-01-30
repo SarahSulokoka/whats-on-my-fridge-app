@@ -1,0 +1,47 @@
+package gr.aueb.cf.recipeapp.config;
+
+import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+
+    @Bean
+    public LocaleResolver localeResolver() {
+        SessionLocaleResolver slr = new SessionLocaleResolver();
+        slr.setDefaultLocale(new Locale("el"));
+        return slr;
+    }
+
+    @Bean
+    public LocaleChangeInterceptor localeChangeInterceptor() {
+        LocaleChangeInterceptor lci = new LocaleChangeInterceptor();
+        lci.setParamName("lang"); // ?lang=el ή ?lang=en
+        return lci;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(localeChangeInterceptor());
+    }
+
+    // (optional αλλά βοηθάει) explicit MessageSource
+    @Bean
+    public MessageSource messageSource() {
+        ReloadableResourceBundleMessageSource ms = new ReloadableResourceBundleMessageSource();
+        ms.setBasename("classpath:messages/messages");
+        ms.setDefaultEncoding(StandardCharsets.UTF_8.name());
+        ms.setFallbackToSystemLocale(false);
+        return ms;
+    }
+}

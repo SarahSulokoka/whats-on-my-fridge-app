@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -28,6 +29,6 @@ public class Recipe {
     @JoinColumn(name = "user_id", nullable = false)
     private User owner;
 
-    @OneToMany(mappedBy = "recipe")
-    private List<RecipeIngredient> recipeIngredients;
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RecipeIngredient> recipeIngredients = new ArrayList<>();
 }

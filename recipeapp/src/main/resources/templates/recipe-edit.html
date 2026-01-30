@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" th:href="@{/css/styles.css}">
+  <title>Edit Recipe</title>
+</head>
+<body>
+<div class="container">
+
+  <div class="nav">
+    <div class="brand">
+      <h1>RecipeApp</h1>
+      <small>Edit your recipe</small>
+    </div>
+
+    <div class="links">
+      <a th:href="@{/fridge}">Fridge</a>
+      <a th:href="@{/recipes/new}" sec:authorize="isAuthenticated()">New Recipe</a>
+      <a th:href="@{/recipes/mine}" sec:authorize="isAuthenticated()">My Recipes</a>
+      <a th:href="@{/login}" sec:authorize="isAnonymous()">Login</a>
+      <a th:href="@{/signup}" sec:authorize="isAnonymous()">Sign up</a>
+      <a th:href="@{/logout}" sec:authorize="isAuthenticated()">Logout</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Edit Recipe</h2>
+
+    <form th:object="${recipe}" method="post">
+
+      <div style="margin-bottom:12px;">
+        <label>Title</label>
+        <input type="text" th:field="*{title}" placeholder="e.g. Pancakes">
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label>Description</label>
+        <textarea th:field="*{description}" placeholder="Short instructions..."></textarea>
+      </div>
+
+      <h3>Ingredients</h3>
+
+      <div th:if="${recipe.ingredients == null or #lists.isEmpty(recipe.ingredients)}" class="muted">
+        No ingredients yet.
+      </div>
+
+      <div th:each="ing, stat : *{ingredients}">
+        <div class="form-row">
+          <div>
+            <label>Name</label>
+            <input type="text"
+                   th:field="*{ingredients[__${stat.index}__].name}"
+                   placeholder="e.g. egg">
+          </div>
+
+          <div>
+            <label>Quantity</label>
+            <input type="number" step="0.01"
+                   th:field="*{ingredients[__${stat.index}__].quantity}"
+                   placeholder="e.g. 2">
+          </div>
+
+          <div>
+            <label>Unit</label>
+            <select th:field="*{ingredients[__${stat.index}__].unit}">
+              <option th:each="u : ${units}" th:value="${u}" th:text="${u}"></option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn" type="submit"
+                th:formaction="@{'/recipes/' + ${recipeId} + '/edit'}">
+          Save changes
+        </button>
+
+        <button class="btn secondary" type="submit"
+                th:formaction="@{'/recipes/' + ${recipeId} + '/edit/add-ingredient'}">
+          + Ingredient
+        </button>
+
+        <a class="btn secondary" th:href="@{/recipes/mine}">
+          Back
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+</body>
+</html>

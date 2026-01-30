@@ -1,57 +1,161 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" th:href="@{/css/styles.css}">
-  <title>Fridge</title>
+  <title th:text="#{fridge.pageTitle}">Fridge</title>
 </head>
 <body>
 <div class="container">
 
-  <div class="nav">
+  <div class="nav" style="position:relative;">
     <div class="brand">
       <h1>RecipeApp</h1>
-      <small>Write what you have & get recipes</small>
+      <small th:text="#{app.tagline}">Find recipes from your fridge</small>
     </div>
-    <div class="links">
-      <a th:href="@{/fridge}">Fridge</a>
-      <a th:href="@{/recipes/new}">New Recipe</a>
+
+    <!-- Language switch (top-right) -->
+    <div style="position:absolute; top:10px; right:16px; display:flex; gap:10px; align-items:center;">
+      <a th:href="@{/fridge(lang='el')}" class="muted" style="text-decoration:none;">Ελληνικά</a>
+      <span class="muted">|</span>
+      <a th:href="@{/fridge(lang='en')}" class="muted" style="text-decoration:none;">English</a>
+    </div>
+
+    <div class="links" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <a th:href="@{/fridge}" th:text="#{nav.fridge}">Fridge</a>
+
+      <a th:href="@{/recipes/new}" sec:authorize="isAuthenticated()" th:text="#{nav.newRecipe}">New Recipe</a>
+      <a th:href="@{/recipes/mine}" sec:authorize="isAuthenticated()" th:text="#{nav.myRecipes}">My Recipes</a>
+
+      <a th:href="@{/login}" sec:authorize="isAnonymous()" th:text="#{nav.login}">Login</a>
+      <a th:href="@{/signup}" sec:authorize="isAnonymous()" th:text="#{nav.signup}">Sign up</a>
+
+      <a th:href="@{/logout}" sec:authorize="isAuthenticated()" th:text="#{nav.logout}">Logout</a>
     </div>
   </div>
 
   <div class="card">
-    <h2>Fridge Search</h2>
-    <p class="muted">Write ingredients separated by commas. Example: <span class="kbd">egg, milk, flour</span></p>
+    <h2 th:text="#{fridge.title}">What's in your fridge?</h2>
 
-    <form th:action="@{/fridge/search}" method="post">
-      <div class="form-row" style="grid-template-columns: 1fr 180px;">
-        <div>
-          <label>Ingredients</label>
-          <input type="text" name="ingredients" th:value="${ingredients}" placeholder="e.g. egg, milk, flour">
-        </div>
-        <div style="display:flex; align-items:end;">
-          <button class="btn" type="submit">Search</button>
-        </div>
-      </div>
-    </form>
-
-    <h3>Results</h3>
-
-    <div th:if="${recipes != null}">
-      <div th:if="${#lists.isEmpty(recipes)}" class="muted">
-        No recipes found.
-      </div>
-
-      <ul class="list" th:if="${!#lists.isEmpty(recipes)}">
-        <li th:each="r : ${recipes}">
-          <span th:text="${r.title}"></span>
-          <span class="muted" th:text="${r.owner != null ? r.owner.username : ''}"></span>
-        </li>
-      </ul>
+    <div class="muted" style="margin-bottom:12px;"
+         th:text="#{fridge.subtitle}">
+      Enter the ingredients and discover what you can cook.
     </div>
 
+    <form th:action="@{/fridge}" method="post">
+      <label th:text="#{fridge.inputLabel}">
+        Ingredients (comma or space separated)
+      </label>
+
+      <input type="text" name="items"
+             th:value="${items}"
+             th:placeholder="#{fridge.placeholder}"
+             placeholder="egg, milk, flour">
+
+      <div style="margin-top:12px;">
+        <button class="btn" type="submit" th:text="#{fridge.search}">Search</button>
+      </div>
+    </form>
   </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <h2 class="muted" style="margin:0;" th:text="#{results.title}">Results</h2>
+
+      <div style="min-width:240px; flex:1; max-width:360px;"
+           th:if="${searched == true and !#lists.isEmpty(matches)}">
+        <label class="muted" style="font-size:13px;" th:text="#{results.searchByTitle}">Search by title</label>
+        <input id="titleFilter" type="text"
+               th:placeholder="#{results.searchPlaceholder}"
+               placeholder="type a title..."
+               style="margin-top:6px;">
+      </div>
+    </div>
+
+    <div th:if="${searched == false}" class="muted" style="margin-top:10px;"
+         th:text="#{results.hint}">
+      Type ingredients and press Search.
+    </div>
+
+    <div th:if="${searched == true and #lists.isEmpty(matches)}" class="muted" style="margin-top:10px;">
+      <strong th:text="#{results.oopsTitle}">Oops…</strong><br><br>
+      <span th:text="#{results.noMatchLine1}">No recipes match what you typed.</span><br>
+      <span th:text="#{results.noMatchLine2}">Try fewer ingredients, or check spelling.</span>
+    </div>
+
+    <div th:if="${searched == true and !#lists.isEmpty(matches)}" style="margin-top:10px;">
+      <div th:each="m : ${matches}"
+           class="result-item"
+           th:attr="data-title=${#strings.toLowerCase(m.title)}"
+           style="padding:12px 0; border-bottom:1px solid #e6e6e6;">
+
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div>
+            <strong th:text="${m.title}">Title</strong>
+            <div class="muted" th:text="${m.description}">Description</div>
+          </div>
+
+          <div class="muted">
+            <span th:text="${m.haveCount} + '/' + ${m.totalIngredients}">0/0</span>
+          </div>
+        </div>
+
+        <div style="margin-top:8px;">
+          <span th:if="${m.missingCount == 0}" class="muted" th:text="#{results.youHaveEverything}">
+            You have everything!
+          </span>
+
+          <span th:if="${m.missingCount == 1}" class="muted">
+            <span th:text="#{results.missingOnlyOne}">Missing only 1 ingredient:</span>
+            <strong th:text="${m.missing[0]}">x</strong>
+          </span>
+
+          <span th:if="${m.missingCount > 1}" class="muted">
+            <span th:text="#{results.missingN}">Missing</span>
+            <strong th:text="${m.missingCount}">N</strong>
+            <span th:text="#{results.ingredients}">ingredients:</span>
+            <span th:text="${#strings.listJoin(m.missing, ', ')}">a, b</span>
+          </span>
+        </div>
+      </div>
+
+      <div id="noTitleMatches" class="muted" style="display:none; margin-top:12px;"
+           th:text="#{results.noTitleMatches}">
+        No results with that title.
+      </div>
+    </div>
+  </div>
+
 </div>
+
+<script>
+  (function () {
+    const input = document.getElementById('titleFilter');
+    if (!input) return;
+
+    const items = Array.from(document.querySelectorAll('.result-item'));
+    const emptyMsg = document.getElementById('noTitleMatches');
+
+    function run() {
+      const q = (input.value || '').trim().toLowerCase();
+      let visible = 0;
+
+      items.forEach(el => {
+        const t = (el.getAttribute('data-title') || '');
+        const ok = !q || t.includes(q);
+        el.style.display = ok ? '' : 'none';
+        if (ok) visible++;
+      });
+
+      if (emptyMsg) emptyMsg.style.display = visible === 0 ? '' : 'none';
+    }
+
+    input.addEventListener('input', run);
+    run();
+  })();
+</script>
+
 </body>
 </html>

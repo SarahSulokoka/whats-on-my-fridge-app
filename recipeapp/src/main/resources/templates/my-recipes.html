@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <title>My Recipes</title>
+</head>
+<body>
+<div class="container">
+
+    <div class="nav">
+        <div class="brand">
+            <h1>RecipeApp</h1>
+            <small>Your personal cookbook</small>
+        </div>
+
+        <div class="links">
+            <a th:href="@{/fridge}">Fridge</a>
+
+            <a th:href="@{/recipes/new}" sec:authorize="isAuthenticated()">New Recipe</a>
+            <a th:href="@{/recipes/mine}" sec:authorize="isAuthenticated()">My Recipes</a>
+
+            <a th:href="@{/login}" sec:authorize="isAnonymous()">Login</a>
+            <a th:href="@{/signup}" sec:authorize="isAnonymous()">Sign up</a>
+
+            <a th:href="@{/logout}" sec:authorize="isAuthenticated()">Logout</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>My Recipes</h2>
+
+        <div th:if="${#lists.isEmpty(recipes)}" class="muted">
+            You haven’t created any recipes yet.
+            <div style="margin-top:12px;">
+                <a class="btn" th:href="@{/recipes/new}">Create your first recipe</a>
+            </div>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(recipes)}">
+            <div th:each="r : ${recipes}" style="padding:14px 0; border-bottom:1px solid #e6e6e6;">
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+                    <div style="flex:1;">
+                        <strong th:text="${r.title}">Title</strong>
+                        <div class="muted" th:text="${r.description}">Description</div>
+
+                        <div style="margin-top:10px;">
+                            <div class="muted" style="margin-bottom:6px;">Ingredients</div>
+
+                            <div th:if="${r.recipeIngredients == null or #lists.isEmpty(r.recipeIngredients)}" class="muted">
+                                No ingredients saved.
+                            </div>
+
+                            <ul th:if="${r.recipeIngredients != null and !#lists.isEmpty(r.recipeIngredients)}" style="margin:0; padding-left:18px;">
+                                <li th:each="ri : ${r.recipeIngredients}">
+                                    <span th:text="${ri.ingredient.name}">egg</span>
+                                    <span class="muted">
+                    (
+                    <span th:text="${ri.quantity}">1</span>
+                    <span th:text="${ri.unit}">GRAM</span>
+                    )
+                  </span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <a class="btn secondary" th:href="@{'/recipes/' + ${r.id} + '/edit'}">Edit</a>
+
+                        <form th:action="@{'/recipes/' + ${r.id} + '/delete'}" method="post" style="margin:0;">
+                            <button class="btn secondary" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>

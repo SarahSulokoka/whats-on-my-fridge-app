@@ -1,185 +1,217 @@
 package gr.aueb.cf.recipeapp.util;
 
-import gr.aueb.cf.recipeapp.model.entity.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import gr.aueb.cf.recipeapp.model.entity.Ingredient;
+import gr.aueb.cf.recipeapp.model.entity.Recipe;
+import gr.aueb.cf.recipeapp.model.entity.RecipeIngredient;
+import gr.aueb.cf.recipeapp.model.entity.User;
 import gr.aueb.cf.recipeapp.model.enums.Unit;
-import gr.aueb.cf.recipeapp.repository.*;
+import gr.aueb.cf.recipeapp.repository.IngredientRepository;
+import gr.aueb.cf.recipeapp.repository.RecipeIngredientRepository;
+import gr.aueb.cf.recipeapp.repository.RecipeRepository;
+import gr.aueb.cf.recipeapp.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Configuration
 public class DataInitializer {
+
+    private static final String THEMEALDB_BASE = "https://www.themealdb.com/api/json/v1/1";
+    private static final int TARGET_RECIPES = 100;
+    private static final int CHUNK = 50;
 
     @Bean
     CommandLineRunner initData(
             UserRepository userRepository,
             IngredientRepository ingredientRepository,
             RecipeRepository recipeRepository,
-            RecipeIngredientRepository recipeIngredientRepository
+            RecipeIngredientRepository recipeIngredientRepository,
+            PasswordEncoder passwordEncoder
     ) {
-        return args -> {
+        return args -> seed(userRepository, ingredientRepository, recipeRepository, recipeIngredientRepository, passwordEncoder);
+    }
 
-            if (userRepository.count() > 0) return;
+    @Transactional
+    void seed(
+            UserRepository userRepository,
+            IngredientRepository ingredientRepository,
+            RecipeRepository recipeRepository,
+            RecipeIngredientRepository recipeIngredientRepository,
+            PasswordEncoder passwordEncoder
+    ) {
+        User demo = userRepository.findByUsername("demo").orElseGet(() -> {
+            User u = new User();
+            u.setUsername("demo");
+            u.setPassword(passwordEncoder.encode("demo"));
+            return userRepository.save(u);
+        });
 
-            User user = new User();
-            user.setUsername("demo");
-            user.setPassword("demo");
-            userRepository.save(user);
+        long existing = recipeRepository.count();
+        if (existing >= TARGET_RECIPES) return;
 
-            Ingredient egg = new Ingredient();
-            egg.setName("egg");
-            ingredientRepository.save(egg);
+        int toCreate = (int) (TARGET_RECIPES - existing);
 
-            Ingredient milk = new Ingredient();
-            milk.setName("milk");
-            ingredientRepository.save(milk);
+        RestClient client = RestClient.create();
 
-            Ingredient flour = new Ingredient();
-            flour.setName("flour");
-            ingredientRepository.save(flour);
+        List<Meal> meals = new ArrayList<>();
+        Set<String> usedIds = new HashSet<>();
 
-            Ingredient sugar = new Ingredient();
-            sugar.setName("sugar");
-            ingredientRepository.save(sugar);
+        int safety = 0;
+        while (meals.size() < toCreate && safety < toCreate * 10) {
+            safety++;
 
-            Ingredient butter = new Ingredient();
-            butter.setName("butter");
-            ingredientRepository.save(butter);
+            MealDbResponse randomResp = client.get()
+                    .uri(THEMEALDB_BASE + "/random.php")
+                    .retrieve()
+                    .body(MealDbResponse.class);
 
-            Ingredient cheese = new Ingredient();
-            cheese.setName("cheese");
-            ingredientRepository.save(cheese);
+            if (randomResp == null || randomResp.meals == null || randomResp.meals.isEmpty()) continue;
 
-            Ingredient tomato = new Ingredient();
-            tomato.setName("tomato");
-            ingredientRepository.save(tomato);
+            Meal meal = randomResp.meals.get(0);
+            if (meal == null || meal.idMeal == null) continue;
 
-            Ingredient pasta = new Ingredient();
-            pasta.setName("pasta");
-            ingredientRepository.save(pasta);
+            if (!usedIds.add(meal.idMeal)) continue;
 
-            Ingredient oliveOil = new Ingredient();
-            oliveOil.setName("olive oil");
-            ingredientRepository.save(oliveOil);
+            String title = safe(meal.strMeal);
+            if (title.isBlank()) continue;
 
-            Ingredient salt = new Ingredient();
-            salt.setName("salt");
-            ingredientRepository.save(salt);
+            List<String> ingNames = meal.extractIngredientNames();
+            if (ingNames.isEmpty()) continue;
 
-            Recipe pancakes = new Recipe();
-            pancakes.setTitle("Pancakes");
-            pancakes.setDescription("Mix ingredients and cook on pan");
-            pancakes.setOwner(user);
-            recipeRepository.save(pancakes);
+            if (safe(meal.strInstructions).isBlank()) meal.strInstructions = "No instructions available.";
 
-            RecipeIngredient p1 = new RecipeIngredient();
-            p1.setRecipe(pancakes);
-            p1.setIngredient(egg);
-            p1.setQuantity(2.0);
-            p1.setUnit(Unit.PIECE);
-            recipeIngredientRepository.save(p1);
+            meals.add(meal);
+        }
 
-            RecipeIngredient p2 = new RecipeIngredient();
-            p2.setRecipe(pancakes);
-            p2.setIngredient(milk);
-            p2.setQuantity(200.0);
-            p2.setUnit(Unit.ML);
-            recipeIngredientRepository.save(p2);
+        if (meals.isEmpty()) return;
 
-            RecipeIngredient p3 = new RecipeIngredient();
-            p3.setRecipe(pancakes);
-            p3.setIngredient(flour);
-            p3.setQuantity(150.0);
-            p3.setUnit(Unit.GRAM);
-            recipeIngredientRepository.save(p3);
+        Map<String, Ingredient> ingredientCache = new HashMap<>();
+        List<Ingredient> allExistingIngredients = ingredientRepository.findAll();
+        for (Ingredient i : allExistingIngredients) {
+            if (i.getName() != null) ingredientCache.put(i.getName().trim().toLowerCase(Locale.ROOT), i);
+        }
 
-            RecipeIngredient p4 = new RecipeIngredient();
-            p4.setRecipe(pancakes);
-            p4.setIngredient(sugar);
-            p4.setQuantity(30.0);
-            p4.setUnit(Unit.GRAM);
-            recipeIngredientRepository.save(p4);
+        List<Recipe> recipesToSave = new ArrayList<>();
+        List<List<String>> recipeIngredientsNames = new ArrayList<>();
 
-            Recipe omelette = new Recipe();
-            omelette.setTitle("Omelette");
-            omelette.setDescription("Egg omelette with cheese");
-            omelette.setOwner(user);
-            recipeRepository.save(omelette);
+        for (Meal m : meals) {
+            Recipe r = new Recipe();
+            r.setTitle(safe(m.strMeal));
 
-            RecipeIngredient o1 = new RecipeIngredient();
-            o1.setRecipe(omelette);
-            o1.setIngredient(egg);
-            o1.setQuantity(3.0);
-            o1.setUnit(Unit.PIECE);
-            recipeIngredientRepository.save(o1);
+            String desc = safe(m.strInstructions);
+            if (desc.length() > 600) desc = desc.substring(0, 600) + "...";
+            r.setDescription(desc);
 
-            RecipeIngredient o2 = new RecipeIngredient();
-            o2.setRecipe(omelette);
-            o2.setIngredient(cheese);
-            o2.setQuantity(50.0);
-            o2.setUnit(Unit.GRAM);
-            recipeIngredientRepository.save(o2);
+            r.setOwner(demo);
 
-            RecipeIngredient o3 = new RecipeIngredient();
-            o3.setRecipe(omelette);
-            o3.setIngredient(butter);
-            o3.setQuantity(10.0);
-            o3.setUnit(Unit.GRAM);
-            recipeIngredientRepository.save(o3);
+            recipesToSave.add(r);
+            recipeIngredientsNames.add(m.extractIngredientNames());
+        }
 
-            Recipe pastaTomato = new Recipe();
-            pastaTomato.setTitle("Pasta with Tomato");
-            pastaTomato.setDescription("Boil pasta and add tomato sauce");
-            pastaTomato.setOwner(user);
-            recipeRepository.save(pastaTomato);
+        for (int start = 0; start < recipesToSave.size(); start += CHUNK) {
+            int end = Math.min(start + CHUNK, recipesToSave.size());
+            List<Recipe> chunk = recipesToSave.subList(start, end);
+            recipeRepository.saveAll(chunk);
+            recipeRepository.flush();
+        }
 
-            RecipeIngredient t1 = new RecipeIngredient();
-            t1.setRecipe(pastaTomato);
-            t1.setIngredient(pasta);
-            t1.setQuantity(200.0);
-            t1.setUnit(Unit.GRAM);
-            recipeIngredientRepository.save(t1);
+        List<RecipeIngredient> links = new ArrayList<>();
 
-            RecipeIngredient t2 = new RecipeIngredient();
-            t2.setRecipe(pastaTomato);
-            t2.setIngredient(tomato);
-            t2.setQuantity(3.0);
-            t2.setUnit(Unit.PIECE);
-            recipeIngredientRepository.save(t2);
+        for (int idx = 0; idx < recipesToSave.size(); idx++) {
+            Recipe recipe = recipesToSave.get(idx);
+            List<String> ingNames = recipeIngredientsNames.get(idx);
 
-            RecipeIngredient t3 = new RecipeIngredient();
-            t3.setRecipe(pastaTomato);
-            t3.setIngredient(oliveOil);
-            t3.setQuantity(2.0);
-            t3.setUnit(Unit.TABLESPOON);
-            recipeIngredientRepository.save(t3);
+            for (String raw : ingNames) {
+                String name = raw.trim().toLowerCase(Locale.ROOT);
+                if (name.isBlank()) continue;
 
-            RecipeIngredient t4 = new RecipeIngredient();
-            t4.setRecipe(pastaTomato);
-            t4.setIngredient(salt);
-            t4.setQuantity(1.0);
-            t4.setUnit(Unit.TEASPOON);
-            recipeIngredientRepository.save(t4);
+                Ingredient ing = ingredientCache.get(name);
+                if (ing == null) {
+                    Ingredient ni = new Ingredient();
+                    ni.setName(name);
+                    ing = ingredientRepository.save(ni);
+                    ingredientCache.put(name, ing);
+                }
 
-            Recipe grilledCheese = new Recipe();
-            grilledCheese.setTitle("Grilled Cheese");
-            grilledCheese.setDescription("Toasted bread with melted cheese");
-            grilledCheese.setOwner(user);
-            recipeRepository.save(grilledCheese);
+                RecipeIngredient ri = new RecipeIngredient();
+                ri.setRecipe(recipe);
+                ri.setIngredient(ing);
+                ri.setQuantity(1.0);
+                ri.setUnit(Unit.PIECE);
 
-            RecipeIngredient g1 = new RecipeIngredient();
-            g1.setRecipe(grilledCheese);
-            g1.setIngredient(cheese);
-            g1.setQuantity(80.0);
-            g1.setUnit(Unit.GRAM);
-            recipeIngredientRepository.save(g1);
+                links.add(ri);
+            }
+        }
 
-            RecipeIngredient g2 = new RecipeIngredient();
-            g2.setRecipe(grilledCheese);
-            g2.setIngredient(butter);
-            g2.setQuantity(15.0);
-            g2.setUnit(Unit.GRAM);
-            recipeIngredientRepository.save(g2);
-        };
+        for (int start = 0; start < links.size(); start += 200) {
+            int end = Math.min(start + 200, links.size());
+            List<RecipeIngredient> chunk = links.subList(start, end);
+            recipeIngredientRepository.saveAll(chunk);
+            recipeIngredientRepository.flush();
+        }
+    }
+
+    private static String safe(String s) {
+        return s == null ? "" : s.trim();
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class MealDbResponse {
+        public List<Meal> meals;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Meal {
+        public String idMeal;
+        public String strMeal;
+
+        @JsonProperty("strInstructions")
+        public String strInstructions;
+
+        public String strIngredient1;
+        public String strIngredient2;
+        public String strIngredient3;
+        public String strIngredient4;
+        public String strIngredient5;
+        public String strIngredient6;
+        public String strIngredient7;
+        public String strIngredient8;
+        public String strIngredient9;
+        public String strIngredient10;
+        public String strIngredient11;
+        public String strIngredient12;
+        public String strIngredient13;
+        public String strIngredient14;
+        public String strIngredient15;
+        public String strIngredient16;
+        public String strIngredient17;
+        public String strIngredient18;
+        public String strIngredient19;
+        public String strIngredient20;
+
+        public List<String> extractIngredientNames() {
+            List<String> raw = Arrays.asList(
+                    strIngredient1, strIngredient2, strIngredient3, strIngredient4, strIngredient5,
+                    strIngredient6, strIngredient7, strIngredient8, strIngredient9, strIngredient10,
+                    strIngredient11, strIngredient12, strIngredient13, strIngredient14, strIngredient15,
+                    strIngredient16, strIngredient17, strIngredient18, strIngredient19, strIngredient20
+            );
+
+            return raw.stream()
+                    .filter(Objects::nonNull)
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .map(s -> s.toLowerCase(Locale.ROOT))
+                    .distinct()
+                    .collect(Collectors.toList());
+        }
     }
 }
