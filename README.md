@@ -12,8 +12,6 @@ The project was designed and implemented following **Domain-Driven Design princi
 and a **layered architecture**, focusing on clean code, separation of concerns,  
 and real-world application structure.
 
----
-
 ## Technologies Used
 
 ### Backend
@@ -46,20 +44,6 @@ and real-world application structure.
 The application follows a **layered architecture**:
 
 - **Controller Layer**
-<<<<<<< HEAD
-    - Handles HTTP requests
-    - Manages routing and UI rendering (Thymeleaf)
-
-- **Service Layer**
-    - Contains business logic
-    - Coordinates data flow between controllers and repositories
-
-- **Repository Layer**
-    - Handles persistence using Spring Data JPA
-
-- **Domain Model**
-    - Represents real-world entities and relationships
-=======
   - Handles HTTP requests
   - Manages routing and UI rendering (Thymeleaf)
 
@@ -72,7 +56,6 @@ The application follows a **layered architecture**:
 
 - **Domain Model**
   - Represents real-world entities and relationships
->>>>>>> origin/main
 
 This separation ensures maintainability, scalability, and testability.
 
@@ -82,19 +65,6 @@ This separation ensures maintainability, scalability, and testability.
 
 ### Entities
 - **User**
-<<<<<<< HEAD
-    - Represents registered users of the application
-
-- **Recipe**
-    - Represents a cooking recipe
-
-- **Ingredient**
-    - Represents a unique ingredient
-
-- **RecipeIngredient**
-    - Join entity between Recipe and Ingredient
-    - Stores quantity and measurement unit
-=======
   - Represents registered users of the application
 
 - **Recipe**
@@ -106,7 +76,6 @@ This separation ensures maintainability, scalability, and testability.
 - **RecipeIngredient**
   - Join entity between Recipe and Ingredient  
   - Stores quantity and measurement unit
->>>>>>> origin/main
 
 ### Relationships
 - A **User** can own multiple **Recipes**
@@ -123,13 +92,8 @@ The database structure is automatically created based on these entities using JP
 - Users enter ingredients they have available
 - The system compares input ingredients with stored recipes
 - Recipes are ranked based on:
-<<<<<<< HEAD
-    - Matching ingredients
-    - Missing ingredients
-=======
   - Matching ingredients
   - Missing ingredients
->>>>>>> origin/main
 - Recipes with fewer missing ingredients are shown first
 
 ### Recipe Recommendations
@@ -146,13 +110,8 @@ The database structure is automatically created based on these entities using JP
 
 ### Public Access
 - Guest users can:
-<<<<<<< HEAD
-    - Browse all recipes
-    - Use the fridge search functionality
-=======
   - Browse all recipes
   - Use the fridge search functionality
->>>>>>> origin/main
 
 ---
 
@@ -160,15 +119,6 @@ The database structure is automatically created based on these entities using JP
 
 - **Spring Security** is used for authentication and authorization
 - Guest users:
-<<<<<<< HEAD
-    - Can search and view recipes
-- Authenticated users:
-    - Can create recipes
-    - Can edit and delete **only their own recipes**
-- Authorization rules are enforced both in:
-    - Controllers
-    - UI (Thymeleaf security tags)
-=======
   - Can search and view recipes
 - Authenticated users:
   - Can create recipes
@@ -176,7 +126,6 @@ The database structure is automatically created based on these entities using JP
 - Authorization rules are enforced both in:
   - Controllers
   - UI (Thymeleaf security tags)
->>>>>>> origin/main
 
 ---
 
@@ -189,8 +138,6 @@ The imported data is:
 - Parsed and mapped to the internal domain model
 - Normalized to avoid duplicate ingredients
 - Stored locally in the database for further use
-
-This demonstrates basic API consumption, data transformation, and persistence.
 
 ---
 
@@ -220,54 +167,39 @@ This demonstrates basic API consumption, data transformation, and persistence.
 - MySQL
 - Git
 
+### Create Database
+Create a MySQL database named `recipe_fridge`.
 
-Build & Run Instructions
+### Configure Application Properties
+Update `application.properties` with your local database credentials:
 
-Create Database
-Create a MySQL database named recipe_fridge.
+spring.datasource.url=jdbc:mysql://localhost:3306/recipe_fridge  
+spring.datasource.username=YOUR_USERNAME  
+spring.datasource.password=YOUR_PASSWORD  
 
-Configure Application Properties
-Update the application.properties file if needed with your local database credentials:
-
-spring.datasource.url = jdbc:mysql://localhost:3306/recipe_fridge
-
-spring.datasource.username = YOUR_USERNAME
-
-spring.datasource.password = YOUR_PASSWORD
-
-Build the Application
-Build the project using Maven:
-
+### Build the Application
 mvn clean package
 
-Run the Application
-You can run the application using either of the following methods:
+### Run the Application
+mvn spring-boot:run  
 
-mvn spring-boot:run
-or
+or  
 
-java -jar target/recipeapp.jar
+java -jar target/recipeapp.jar  
 
-Access the Application
-Once the application is running, open your browser and navigate to:
+### Access the Application
 http://localhost:8080
 
-Notes
+---
 
-The application supports a multilingual structure.
+## Notes
+- The application supports a multilingual structure.
+- Due to time constraints, full Greek localization was not completed.
+- The application remains fully functional in English.
 
-Due to time constraints, full Greek localization was not completed, as it required more effort than initially estimated.
+---
 
-The application remains fully functional in English.
+## Author
 
-Author
-
-<<<<<<< HEAD
-Sarah Sulokoka - Student @
-=======
-Sarah Sulokoka - Student @ 
->>>>>>> origin/main
+Sarah Sulokoka  
 Coding Factory 8 – Athens University of Economics and Business
-
-
-
