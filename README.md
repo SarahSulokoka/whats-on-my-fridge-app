@@ -46,6 +46,7 @@ and real-world application structure.
 The application follows a **layered architecture**:
 
 - **Controller Layer**
+<<<<<<< HEAD
     - Handles HTTP requests
     - Manages routing and UI rendering (Thymeleaf)
 
@@ -58,6 +59,20 @@ The application follows a **layered architecture**:
 
 - **Domain Model**
     - Represents real-world entities and relationships
+=======
+  - Handles HTTP requests
+  - Manages routing and UI rendering (Thymeleaf)
+
+- **Service Layer**
+  - Contains business logic
+  - Coordinates data flow between controllers and repositories
+
+- **Repository Layer**
+  - Handles persistence using Spring Data JPA
+
+- **Domain Model**
+  - Represents real-world entities and relationships
+>>>>>>> origin/main
 
 This separation ensures maintainability, scalability, and testability.
 
@@ -67,6 +82,7 @@ This separation ensures maintainability, scalability, and testability.
 
 ### Entities
 - **User**
+<<<<<<< HEAD
     - Represents registered users of the application
 
 - **Recipe**
@@ -78,6 +94,19 @@ This separation ensures maintainability, scalability, and testability.
 - **RecipeIngredient**
     - Join entity between Recipe and Ingredient
     - Stores quantity and measurement unit
+=======
+  - Represents registered users of the application
+
+- **Recipe**
+  - Represents a cooking recipe
+
+- **Ingredient**
+  - Represents a unique ingredient
+
+- **RecipeIngredient**
+  - Join entity between Recipe and Ingredient  
+  - Stores quantity and measurement unit
+>>>>>>> origin/main
 
 ### Relationships
 - A **User** can own multiple **Recipes**
@@ -94,8 +123,13 @@ The database structure is automatically created based on these entities using JP
 - Users enter ingredients they have available
 - The system compares input ingredients with stored recipes
 - Recipes are ranked based on:
+<<<<<<< HEAD
     - Matching ingredients
     - Missing ingredients
+=======
+  - Matching ingredients
+  - Missing ingredients
+>>>>>>> origin/main
 - Recipes with fewer missing ingredients are shown first
 
 ### Recipe Recommendations
@@ -112,8 +146,13 @@ The database structure is automatically created based on these entities using JP
 
 ### Public Access
 - Guest users can:
+<<<<<<< HEAD
     - Browse all recipes
     - Use the fridge search functionality
+=======
+  - Browse all recipes
+  - Use the fridge search functionality
+>>>>>>> origin/main
 
 ---
 
@@ -121,6 +160,7 @@ The database structure is automatically created based on these entities using JP
 
 - **Spring Security** is used for authentication and authorization
 - Guest users:
+<<<<<<< HEAD
     - Can search and view recipes
 - Authenticated users:
     - Can create recipes
@@ -128,6 +168,15 @@ The database structure is automatically created based on these entities using JP
 - Authorization rules are enforced both in:
     - Controllers
     - UI (Thymeleaf security tags)
+=======
+  - Can search and view recipes
+- Authenticated users:
+  - Can create recipes
+  - Can edit and delete **only their own recipes**
+- Authorization rules are enforced both in:
+  - Controllers
+  - UI (Thymeleaf security tags)
+>>>>>>> origin/main
 
 ---
 
@@ -213,7 +262,11 @@ The application remains fully functional in English.
 
 Author
 
+<<<<<<< HEAD
 Sarah Sulokoka - Student @
+=======
+Sarah Sulokoka - Student @ 
+>>>>>>> origin/main
 Coding Factory 8 – Athens University of Economics and Business
 
 
