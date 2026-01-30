@@ -1,15 +1,15 @@
 # RecipeApp – Coding Factory 8 Final Project
 
 ## Overview
-RecipeApp is a full-stack web application developed as the final project for
+RecipeApp is a full-stack web application developed as the final project for  
 **Coding Factory 8** of the **Athens University of Economics and Business (AUEB)**.
 
-The application helps users discover recipes based on the ingredients they already
-have available, while also allowing registered users to create, edit, and manage
+The application helps users discover recipes based on the ingredients they already  
+have available, while also allowing registered users to create, edit, and manage  
 their own recipes.
 
-The project was designed and implemented following **Domain-Driven Design principles**
-and a **layered architecture**, focusing on clean code, separation of concerns,
+The project was designed and implemented following **Domain-Driven Design principles**  
+and a **layered architecture**, focusing on clean code, separation of concerns,  
 and real-world application structure.
 
 ---
@@ -25,7 +25,7 @@ and real-world application structure.
 
 ### Database
 - **MySQL**
-- Database schema generated automatically from the domain model
+- Database schema generated automatically from the domain model  
   (Model-First approach)
 
 ### Frontend
@@ -48,11 +48,14 @@ The application follows a **layered architecture**:
 - **Controller Layer**
   - Handles HTTP requests
   - Manages routing and UI rendering (Thymeleaf)
+
 - **Service Layer**
   - Contains business logic
   - Coordinates data flow between controllers and repositories
+
 - **Repository Layer**
   - Handles persistence using Spring Data JPA
+
 - **Domain Model**
   - Represents real-world entities and relationships
 
@@ -65,12 +68,15 @@ This separation ensures maintainability, scalability, and testability.
 ### Entities
 - **User**
   - Represents registered users of the application
+
 - **Recipe**
   - Represents a cooking recipe
+
 - **Ingredient**
   - Represents a unique ingredient
+
 - **RecipeIngredient**
-  - Join entity between Recipe and Ingredient
+  - Join entity between Recipe and Ingredient  
   - Stores quantity and measurement unit
 
 ### Relationships
@@ -125,15 +131,45 @@ The database structure is automatically created based on these entities using JP
 
 ---
 
+## External Data Source
+
+To populate the application with realistic data and avoid manual input of many recipes,  
+the project includes logic for importing **dummy recipe data from an external source / API**.
+
+The imported data is:
+- Parsed and mapped to the internal domain model
+- Normalized to avoid duplicate ingredients
+- Stored locally in the database for further use
+
+This demonstrates basic API consumption, data transformation, and persistence.
+
+---
+
 ## Data Handling & Performance
+
 - Batch inserts enabled for ingredients and recipe relations
 - Optimized JPA queries
 - Transactions handled at the service layer
-- Duplicate ingredients are avoided using normalization logic
+- Duplicate ingredients avoided using normalization logic
+
+---
+
+## Testing
+
+- Manual functional testing during development
+- Authentication and authorization flows tested with different users
+- CRUD operations verified through UI interaction
+- Database consistency validated through repeated create/update/delete actions
 
 ---
 
 ## Build & Run Instructions
+
+### Prerequisites
+- Java 21
+- Maven
+- MySQL
+- Git
 
 ### 1. Create Database
 ```sql
