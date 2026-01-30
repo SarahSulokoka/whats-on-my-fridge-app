@@ -171,45 +171,50 @@ This demonstrates basic API consumption, data transformation, and persistence.
 - MySQL
 - Git
 
-### 
-1. Create Database
-```sql
-CREATE DATABASE recipe_fridge;
 
- 2. Configure Application Properties
+Build & Run Instructions
 
-Update application.properties if needed:
+Create Database
+Create a MySQL database named recipe_fridge.
 
-spring.datasource.url=jdbc:mysql://localhost:3306/recipe_fridge
-spring.datasource.username=YOUR_USERNAME
-spring.datasource.password=YOUR_PASSWORD
+Configure Application Properties
+Update the application.properties file if needed with your local database credentials:
 
+spring.datasource.url = jdbc:mysql://localhost:3306/recipe_fridge
 
-3. Build the Application
+spring.datasource.username = YOUR_USERNAME
+
+spring.datasource.password = YOUR_PASSWORD
+
+Build the Application
+Build the project using Maven:
+
 mvn clean package
 
-4. Run the Application
+Run the Application
+You can run the application using either of the following methods:
+
 mvn spring-boot:run
-
-
 or
-
 
 java -jar target/recipeapp.jar
 
-5. Access the Application
+Access the Application
+Once the application is running, open your browser and navigate to:
 http://localhost:8080
-
 
 Notes
 
-The application supports multilingual structure.
-Due to time constraints, full Greek localization was not completed, as it required
-more effort than initially estimated. The application remains fully functional in English.
+The application supports a multilingual structure.
+
+Due to time constraints, full Greek localization was not completed, as it required more effort than initially estimated.
+
+The application remains fully functional in English.
 
 Author
 
-Sarah Sulokoka
+Sarah Sulokoka - Student @ 
 Coding Factory 8 – Athens University of Economics and Business
+
 
 
