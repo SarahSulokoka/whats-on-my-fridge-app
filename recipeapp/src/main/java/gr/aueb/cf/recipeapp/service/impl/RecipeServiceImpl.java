@@ -177,11 +177,11 @@ public class RecipeServiceImpl implements RecipeService {
         recipe.setDescription(dto.getDescription());
         recipeRepository.save(recipe);
 
-        // delete old ingredients rows
-        recipeIngredientRepository.deleteByRecipeId(recipe.getId());
-        recipeIngredientRepository.flush(); // ✅
 
-        // insert new ingredients rows
+        recipeIngredientRepository.deleteByRecipeId(recipe.getId());
+        recipeIngredientRepository.flush();
+
+
         saveIngredientsForRecipe(recipe, dto);
     }
 
