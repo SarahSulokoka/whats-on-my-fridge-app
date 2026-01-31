@@ -78,9 +78,9 @@
       Type ingredients and press Search.
     </div>
 
-    <div th:if="${searched and #lists.isEmpty(matches)}" class="muted" style="margin-top:10px;">
-      <strong th:text="#{results.oopsTitle}">Oops…</strong><br><br>
-      <span th:text="#{results.noMatchLine1}">No recipes match what you typed.</span><br>
+    <div th:if="${searched == true and exactFound == false}" class="muted" style="margin-top:10px;">
+      <strong th:text="#{results.oopsTitle}">Oops… </strong><br><br>
+      <span th:text="#{results.noMatchLine1}">But take a look below.</span><br>
       <span th:text="#{results.noMatchLine2}">Try fewer ingredients, or check spelling.</span>
     </div>
 
