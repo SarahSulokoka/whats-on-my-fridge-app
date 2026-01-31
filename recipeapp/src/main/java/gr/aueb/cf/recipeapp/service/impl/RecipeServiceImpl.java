@@ -67,7 +67,7 @@ public class RecipeServiceImpl implements RecipeService {
             if (r.getRecipeIngredients() == null || r.getRecipeIngredients().isEmpty()) continue;
 
             LinkedHashSet<String> recipeIngs = r.getRecipeIngredients().stream()
-                    .map(ri -> ri.getIngredient().getName())
+                    .map(ri -> ri.getIngredient() == null ? null : ri.getIngredient().getName())
                     .filter(Objects::nonNull)
                     .map(String::trim)
                     .map(String::toLowerCase)
@@ -76,11 +76,12 @@ public class RecipeServiceImpl implements RecipeService {
 
             if (recipeIngs.isEmpty()) continue;
 
-            int matchedFromInput = 0;
+            List<String> matched = new ArrayList<>();
             for (String x : fridge) {
-                if (recipeIngs.contains(x)) matchedFromInput++;
+                if (recipeIngs.contains(x)) matched.add(x);
             }
 
+            int matchedFromInput = matched.size();
             if (matchedFromInput < requiredMatch) continue;
 
             List<String> missingFromRecipe = recipeIngs.stream()
@@ -93,6 +94,7 @@ public class RecipeServiceImpl implements RecipeService {
             dto.setDescription(r.getDescription());
             dto.setHaveCount(matchedFromInput);
             dto.setTotalIngredients(recipeIngs.size());
+            dto.setMatched(matched);
             dto.setMissing(missingFromRecipe);
             dto.setMissingCount(missingFromRecipe.size());
 
@@ -108,6 +110,7 @@ public class RecipeServiceImpl implements RecipeService {
 
         return results;
     }
+
 
     @Override
     public void createRecipe(CreateRecipeDTO dto, String username) {

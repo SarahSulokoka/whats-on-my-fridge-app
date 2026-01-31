@@ -16,7 +16,6 @@
       <small th:text="#{app.tagline}">Find recipes from your fridge</small>
     </div>
 
-    <!-- Language switch (top-right) -->
     <div style="position:absolute; top:10px; right:16px; display:flex; gap:10px; align-items:center;">
       <a th:href="@{/fridge(lang='el')}" class="muted" style="text-decoration:none;">Ελληνικά</a>
       <span class="muted">|</span>
@@ -65,7 +64,7 @@
       <h2 class="muted" style="margin:0;" th:text="#{results.title}">Results</h2>
 
       <div style="min-width:240px; flex:1; max-width:360px;"
-           th:if="${searched == true and !#lists.isEmpty(matches)}">
+           th:if="${searched and !#lists.isEmpty(matches)}">
         <label class="muted" style="font-size:13px;" th:text="#{results.searchByTitle}">Search by title</label>
         <input id="titleFilter" type="text"
                th:placeholder="#{results.searchPlaceholder}"
@@ -74,18 +73,18 @@
       </div>
     </div>
 
-    <div th:if="${searched == false}" class="muted" style="margin-top:10px;"
+    <div th:if="${!searched}" class="muted" style="margin-top:10px;"
          th:text="#{results.hint}">
       Type ingredients and press Search.
     </div>
 
-    <div th:if="${searched == true and #lists.isEmpty(matches)}" class="muted" style="margin-top:10px;">
+    <div th:if="${searched and #lists.isEmpty(matches)}" class="muted" style="margin-top:10px;">
       <strong th:text="#{results.oopsTitle}">Oops…</strong><br><br>
       <span th:text="#{results.noMatchLine1}">No recipes match what you typed.</span><br>
       <span th:text="#{results.noMatchLine2}">Try fewer ingredients, or check spelling.</span>
     </div>
 
-    <div th:if="${searched == true and !#lists.isEmpty(matches)}" style="margin-top:10px;">
+    <div th:if="${searched and !#lists.isEmpty(matches)}" style="margin-top:10px;">
       <div th:each="m : ${matches}"
            class="result-item"
            th:attr="data-title=${#strings.toLowerCase(m.title)}"
@@ -102,22 +101,22 @@
           </div>
         </div>
 
-        <div style="margin-top:8px;">
-          <span th:if="${m.missingCount == 0}" class="muted" th:text="#{results.youHaveEverything}">
+        <div style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">
+          <div class="muted">
+            <span th:text="#{match.have}">You got:</span>
+            <strong th:text="${m.haveCount}">0</strong>
+            <span th:if="${m.haveCount > 0}">:</span>
+            <span th:if="${m.haveCount > 0}" th:text="${#strings.listJoin(m.matched, ', ')}">milk, egg</span>
+          </div>
+
+          <div class="muted" th:if="${m.missingCount == 0}" th:text="#{match.youHaveEverything}">
             You have everything!
-          </span>
+          </div>
 
-          <span th:if="${m.missingCount == 1}" class="muted">
-            <span th:text="#{results.missingOnlyOne}">Missing only 1 ingredient:</span>
-            <strong th:text="${m.missing[0]}">x</strong>
-          </span>
-
-          <span th:if="${m.missingCount > 1}" class="muted">
-            <span th:text="#{results.missingN}">Missing</span>
-            <strong th:text="${m.missingCount}">N</strong>
-            <span th:text="#{results.ingredients}">ingredients:</span>
-            <span th:text="${#strings.listJoin(m.missing, ', ')}">a, b</span>
-          </span>
+          <div class="muted" th:if="${m.missingCount > 0}">
+            <span th:text="#{match.missing}">You are missing:</span>
+            <strong th:text="${#strings.listJoin(m.missing, ', ')}">x, y</strong>
+          </div>
         </div>
       </div>
 
